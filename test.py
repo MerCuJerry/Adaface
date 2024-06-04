@@ -1,6 +1,7 @@
 from imutils import paths
 from AdaFaceFeature import AdaFaceFeature
 from FaceDatabase import FaceDatabase
+from pathlib import Path
 
 if __name__ == '__main__':
     # 创建一个 FaceDatabase 实例
@@ -9,26 +10,16 @@ if __name__ == '__main__':
     adaface =  AdaFaceFeature() # 创建一个 Adaface 实例
     adaface.load_pretrained_model()
     #处理过的人脸照片，以做面部对齐处理,大小： 112*112
-    dir_path = "./test_reg/"
-    #byte 测试
-    for img_path in paths.list_images(dir_path):
+    #图片注册
+    DIR_PATH = Path.cwd() / "test_reg"
+    for img_path in paths.list_images(DIR_PATH):
         print(img_path)
         feature = adaface.byte_get_represent(img_path)
-        #print("feature = ",feature.detach().numpy()[0])
-        #print("feature.shape = ",len(feature.detach().numpy()[0]))
         face_db.addFace(img_path, feature.detach().numpy()[0]) 
-        #print(utils.feature2json(feature))
-        #print(feature[0].size())
     
-    
-    #query_vector, norm = adaface.model(torch.randn(2,3,112,112))
-    
-    test_path = "./test/img1.jpg"
-    query_vector = adaface.byte_get_represent(test_path)
-    #test_path = "./mtcnn/7cc64_147.88.jpg"
-    #feature = adaface.byte_get_represent(utils.get_image_path_to_byte(test_path))
-    #print(feature == query_vector)
-    #query_vector = adaface.byte_get_represent(utils.get_image_path_to_byte())
+    #图片检测测试
+    TEST_PATH = Path.cwd() / "test" / "img1.jpg"
+    query_vector = adaface.byte_get_represent(TEST_PATH) 
     
     #人脸验证
     threshold = -1000000000000000000

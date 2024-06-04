@@ -26,7 +26,7 @@ class AdaFaceFeature:
         """
         初始化配置
         """
-        with DEFAULT_PATH.open() as file:
+        with file_name.open() as file:
             self.config = yaml.safe_load(file.read())
         self.adaface_config = self.config["adaface"]["zero"]
         self.adaface_models = {
