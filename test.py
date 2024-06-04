@@ -1,9 +1,4 @@
-import numpy as np
-import net
-import torch
-import utils
 from imutils import paths
-from face_alignment import align
 from AdaFaceFeature import AdaFaceFeature
 from FaceDatabase import FaceDatabase
 

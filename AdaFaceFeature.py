@@ -1,19 +1,13 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-"""
-@File    :   main.py
-    adaface demo 通过预训练模型获取合适人脸
-"""
-
-# here put the import lib
-
 import net
 import torch
 import numpy as np
-import yaml_utils as Yaml
+from pathlib import Path
+import yaml
 import utils
 from face_alignment import align
-from imutils import paths
+
+
+DEFAULT_PATH = Path.cwd() / "config" / "config.yaml"
 
 
 class AdaFaceFeature:
@@ -28,11 +22,12 @@ class AdaFaceFeature:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
-    def __init__(self, file_name="config/config.yaml") -> None:
+    def __init__(self, file_name = DEFAULT_PATH) -> None:
         """
         初始化配置
         """
-        self.config = Yaml.get_yaml_config(file_name)
+        with DEFAULT_PATH.open() as file:
+            self.config = yaml.safe_load(file.read())
         self.adaface_config = self.config["adaface"]["zero"]
         self.adaface_models = {
             self.adaface_config["model"]: self.adaface_config["model_file"],
@@ -104,11 +99,3 @@ class AdaFaceFeature:
             return feature
         except Exception:
             print("无法提取脸部特征向量")
-
-    def findCosineDistance(self, source_representation, test_representation):
-        """
-        计算两个向量之间的余弦相似度得分
-        """
-        import torch.nn.functional as F
-
-        return F.cosine_similarity(source_representation, test_representation)

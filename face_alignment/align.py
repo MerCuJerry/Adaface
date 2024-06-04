@@ -1,12 +1,5 @@
-import sys
-import os
-
 from face_alignment import mtcnn
-import argparse
 from PIL import Image
-from tqdm import tqdm
-import random
-from datetime import datetime
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

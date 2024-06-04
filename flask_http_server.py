@@ -8,27 +8,23 @@
 # here put the import lib
 from flask import  Flask  # 导入Flask类
 from flask import Flask, render_template, request,jsonify,Response
-from PIL import Image
-from flask import make_response
 import utils
 import logging
-import json
-import os
 from flask import current_app
-
+from pathlib import Path
 from functools import wraps
 from flask import abort
 from concurrent.futures import ThreadPoolExecutor
 from AdaFaceFeature import AdaFaceFeature
-import yaml_utils as Yaml
+import yaml
 
-
+DEFAULT_PATH = Path.cwd() / "config" / "config.yaml"
 app = Flask(__name__)  # 实例化并命名为app实例
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("PIL.PngImagePlugin").setLevel(logging.WARNING)
-
-config = Yaml.get_yaml_config(file_name="config/config.yaml")
+with DEFAULT_PATH.open() as file:
+    config = yaml.safe_load(file.read())
 flask_config = config['flask']
 
 

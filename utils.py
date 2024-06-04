@@ -1,16 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
-"""
-@File    :   utils.py
-@Time    :   2023/06/28 04:32:11
-@Author  :   Li Ruilong
-@Version :   1.0
-@Contact :   liruilonger@gmail.com
-@Desc    :   None
-"""
-
-# here put the import lib
-
 import os
 import pickle
 import torch
@@ -29,9 +16,6 @@ import glob
 from PIL import Image
 import shutil
 import json
-from PIL import Image
-
-
 
 
 class dotdict(dict):
@@ -455,11 +439,11 @@ def mv_suffix_file(dir_path,destination_path='./temp',suffix="jpg"):
     for file_path in file_paths:
         try:
             shutil.move(file_path, destination_path)
-        except:
+        except Exception:
             pass
             try:
                 os.remove(file_path)    
-            except:
+            except Exception:
                 pass
 
 
