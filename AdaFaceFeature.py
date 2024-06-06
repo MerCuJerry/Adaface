@@ -58,14 +58,10 @@ class AdaFaceFeature:
         """
         PIL RGB图像对象转换为PyTorch模型的输入张量
         """
-        tensor = None
-        try:
-            np_img = np.array(pil_rgb_image)
-            brg_img = ((np_img[:, :, ::-1] / 255.0) - 0.5) / 0.5
-            # tensor = torch.tensor([brg_img.transpose(2, 0,1)]).float()
-            tensor = torch.tensor(np.array([brg_img.transpose(2, 0, 1)])).float()
-        except Exception:
-            return tensor
+        np_img = np.array(pil_rgb_image)
+        brg_img = ((np_img[:, :, ::-1] / 255.0) - 0.5) / 0.5
+        # tensor = torch.tensor([brg_img.transpose(2, 0,1)]).float()
+        tensor = torch.tensor(np.array([brg_img.transpose(2, 0, 1)])).float()
         return tensor
 
     def b64_get_represent(self, path):
@@ -75,17 +71,20 @@ class AdaFaceFeature:
 
         feature = None
 
-        aligned_rgb_img = align.get_aligned_face(
-            image_path=None,
-            rgb_pil_image=utils.get_base64_to_Image(path).convert("RGB"),
-        )
-        bgr_tensor_input = self.to_input(aligned_rgb_img)
-        if bgr_tensor_input is not None:
-            feature, _ = self.model(bgr_tensor_input)
-        else:
-            print("无法提取脸部特征向量")
-        return feature
-
+        try:
+            aligned_rgb_img = align.get_aligned_face(
+                image_path=None,
+                rgb_pil_image=utils.get_base64_to_Image(path).convert("RGB"),
+            )
+            bgr_tensor_input = self.to_input(aligned_rgb_img)
+            if bgr_tensor_input is not None:
+                feature, _ = self.model(bgr_tensor_input)
+            else:
+                print("无法提取脸部特征向量")
+            return feature
+        except Exception as err:
+            raise Exception("无法提取脸部特征向量") from err
+        
     def byte_get_represent(self, path):
         """
         获取脸部特征向量
@@ -97,5 +96,5 @@ class AdaFaceFeature:
             if bgr_tensor_input is not None:
                 feature, _ = self.model(bgr_tensor_input)
             return feature
-        except Exception:
-            print("无法提取脸部特征向量")
+        except Exception as err:
+            raise Exception("无法提取脸部特征向量") from err
