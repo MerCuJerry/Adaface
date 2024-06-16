@@ -1,6 +1,6 @@
 from imutils import paths
-from AdaFaceFeature import AdaFaceFeature
-from FaceDatabase import FaceDatabase
+from src.AdaFaceFeature import AdaFaceFeature
+from src.FaceDatabase import FaceDatabase
 from pathlib import Path
 import asyncio
 import multiprocessing

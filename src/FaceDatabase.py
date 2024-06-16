@@ -1,6 +1,6 @@
 import numpy as np
 import faiss
-
+from pathlib import Path
 
 class FaceDatabase:
     def __init__(self, dimension=512):
@@ -11,7 +11,6 @@ class FaceDatabase:
         """
         self.dimension = dimension  # 保存人脸向量的维度
         self.index = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
-        self.ids = []  # 保存人脸向量对应的 id
 
     def addFace(self, face_id, face_vector):
         """
@@ -24,10 +23,10 @@ class FaceDatabase:
             raise ValueError(
                 "Face vector dimension does not match the database dimension"
             )  # 抛出维度不匹配的异常
-        self.index.add(
-            np.expand_dims(face_vector, axis=0)
+        self.index.add_with_ids(
+            np.expand_dims(face_vector, axis=0),
+            xids=face_id # 记录人脸向量的 id
         )  # 向 Faiss 索引中添加人脸向量
-        self.ids.append(face_id)  # 记录人脸向量的 id
 
     def searchSimilarFaces(self, query_vector, threshold) -> tuple | None:
         """
@@ -40,7 +39,7 @@ class FaceDatabase:
         """
         distances, indices = self.index.search(
             np.expand_dims(query_vector, axis=0), len(self.ids)
-        )  # 使用 Faiss 进行搜索4
+        )  # 使用 Faiss 进行搜索
         # print(distances, indices)
         if distances[0][0] > threshold:
             return self.ids[indices[0][0]], distances[0][0]
@@ -53,25 +52,36 @@ class FaceDatabase:
         Parameters:
         face_id: 待删除的人脸 id
         """
-        # 先删除高索引的元素，再删除低索引的元素，避免索引错位的问题。
-        index_to_remove = [
-            i for i, stored_id in enumerate(self.ids) if stored_id == face_id
-        ]  # 找到需要删除的人脸向量的索引
-        for i in sorted(index_to_remove, reverse=True):
-            self.index.remove_ids(np.array([i]))  # 从 Faiss 索引中删除对应的人脸向量
-            del self.ids[i]  # 从 id 列表中删除对应的 id
+        self.index.remove_ids(face_id)  # 从 Faiss 索引中删除人脸向量
 
-    def getNumFaces(self):
+    def __len__(self):
         """
         获取数据库内存储的人脸向量数量
         Returns:
         int: 人脸向量数量
         """
-        return len(self.ids)  # 返回保存的人脸向量数量
+        return self.index.ntotal  # 返回保存的人脸向量数量
 
     def clearDatabase(self):
         """
         清空数据库，删除所有的人脸向量
         """
         self.index.reset()  # 重置 Faiss 索引
-        self.ids.clear()  # 清空 id 列表
+        
+    def saveDatabase(self, path: Path):
+        """
+        保存数据库到指定路径
+
+        Args:
+            path (_type_): _description_
+        """
+        faiss.write_index(self.index, path.open('wb'))
+
+    def loadDatabase(self, path):
+        """
+        从指定路径加载数据库
+
+        Args:
+            path (_type_): _description_
+        """
+        self.index = faiss.read_index(path)

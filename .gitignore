@@ -166,3 +166,4 @@ cython_debug/
 config/
 test/
 test_reg/
+models/
