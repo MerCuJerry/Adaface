@@ -167,3 +167,4 @@ config/
 test/
 test_reg/
 models/
+data/
