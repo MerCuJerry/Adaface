@@ -6,6 +6,7 @@ from face_hnfnu.Config import server_config as config
 from face_hnfnu.log import logger
 from httpx import AsyncClient
 import asyncio
+import time
 
 async def test():
 
@@ -33,9 +34,9 @@ async def test():
             logger.warning(response.json()["error"])
     
     #删除测试
-    img_id = "/home/mercujerry/WorkingDir/face_hnfnu/adaface-main/test_reg/fbeff_109.73.jpg"
+    img_id = Path.cwd() / "test_reg" / "fbeff_109.73.jpg"
     async with AsyncClient() as client:
-        response = await client.post(f"{url}/remove_face", params={"face_id": img_id})
+        response = await client.post(f"{url}/remove_face", params={"face_id": img_id.as_posix()})
         await asyncio.sleep(1)
     
     with open(img_id, "rb") as f:
@@ -46,6 +47,16 @@ async def test():
             logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
         else:
             logger.warning(response.json()["error"])
+        
+    #压力测试
+    img_path = Path.cwd() / "test" / "img1.jpg"
+    start_time = time.time()
+    with open(img_path, "rb") as f:
+        async with AsyncClient() as client:
+            for i in range(100):
+                response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), f, "image/jpeg")})
+    end_time = time.time()
+    logger.warning(f"Finished stress test in {end_time - start_time} seconds")
 
 
 if __name__ == '__main__':

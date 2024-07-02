@@ -2,7 +2,6 @@ from face_hnfnu.net import build_model
 import torch
 import numpy as np
 from PIL import Image
-from face_hnfnu.utils import get_base64_to_Image
 from face_hnfnu.face_alignment import align
 from face_hnfnu.Config import ConfigModel
 
@@ -48,23 +47,6 @@ class AdaFaceFeature:
         # tensor = torch.tensor([brg_img.transpose(2, 0,1)]).float()
         tensor = torch.tensor(np.array([brg_img.transpose(2, 0, 1)])).float()
         return tensor
-
-    def b64_get_represent(self, path):
-        """Base64获取脸部特征向量, Need Fix"""
-
-        feature = None
-
-        try:
-            aligned_rgb_img = align.get_aligned_face(
-                image_path=None,
-                rgb_pil_image=get_base64_to_Image(path).convert("RGB"),
-            )
-            bgr_tensor_input = self.to_input(aligned_rgb_img)
-            if bgr_tensor_input is not None:
-                feature, _ = self.model(bgr_tensor_input)
-            return feature
-        except Exception as err:
-            raise Exception("无法提取脸部特征向量") from err
 
     def byte_get_represent(self, image: Image.Image):
         """获取脸部特征向量"""

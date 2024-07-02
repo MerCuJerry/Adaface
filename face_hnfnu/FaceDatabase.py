@@ -66,6 +66,8 @@ class FaceDatabase:
             name = self.query_database(
                 "SELECT name FROM ids WHERE id = ?", (int(indices[0][0]),)
             )
+            if name is None:
+                raise ValueError("Find face but can't find name in database")
             return name[0], float(distances[0][0])  # 返回人脸 id 和距离
         else:
             return None  # 如果没有超过阈值的则返回 None
