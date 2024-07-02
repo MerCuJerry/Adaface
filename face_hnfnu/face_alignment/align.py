@@ -1,4 +1,4 @@
-from face_alignment import mtcnn
+from face_hnfnu.face_alignment import mtcnn
 from PIL import Image
 import torch
 

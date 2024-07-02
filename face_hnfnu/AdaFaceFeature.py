@@ -1,18 +1,14 @@
-from .net import build_model
+from face_hnfnu.net import build_model
 import torch
 import numpy as np
-from pathlib import Path
-import yaml
-from .utils import get_base64_to_Image
-from .face_alignment import align
-
-
-DEFAULT_PATH = Path.cwd() / "config" / "config.yaml"
+from PIL import Image
+from face_hnfnu.utils import get_base64_to_Image
+from face_hnfnu.face_alignment import align
+from face_hnfnu.Config import ConfigModel
 
 
 class AdaFaceFeature:
-    """AdaFace 人脸特征值预测
-    """
+    """AdaFace 人脸特征值预测"""
 
     __instance = None
 
@@ -21,23 +17,17 @@ class AdaFaceFeature:
             cls.__instance = super().__new__(cls)
         return cls.__instance
 
-    def __init__(self, file_name = DEFAULT_PATH) -> None:
-        """初始化配置
-        """
-        with file_name.open() as file:
-            self.config = yaml.safe_load(file.read())
-        self.adaface_config = self.config["adaface"]["zero"]
-        self.adaface_models = {
-            self.adaface_config["model"]: self.adaface_config["model_file"],
-        }
+    def __init__(self, config: ConfigModel) -> None:
+        """初始化配置"""
+        self.adaface_config = config.ADAFACE_MODEL
+        self.adaface_models = {config.ADAFACE_MODEL: config.ADAFACE_MODEL_FILE}
         pass
 
     def load_pretrained_model(self):
-        """加载模型
-        """
+        """加载模型"""
 
         # load model and pretrained statedict
-        architecture = self.adaface_config["model"]
+        architecture = self.adaface_config
         assert architecture in self.adaface_models.keys()
         model = build_model(architecture)
         statedict = torch.load(
@@ -52,8 +42,7 @@ class AdaFaceFeature:
         return self
 
     def to_input(self, pil_rgb_image):
-        """PIL RGB图像对象转换为PyTorch模型的输入张量
-        """
+        """PIL RGB图像对象转换为PyTorch模型的输入张量"""
         np_img = np.array(pil_rgb_image)
         brg_img = ((np_img[:, :, ::-1] / 255.0) - 0.5) / 0.5
         # tensor = torch.tensor([brg_img.transpose(2, 0,1)]).float()
@@ -61,8 +50,7 @@ class AdaFaceFeature:
         return tensor
 
     def b64_get_represent(self, path):
-        """Base64获取脸部特征向量, Need Fix
-        """
+        """Base64获取脸部特征向量, Need Fix"""
 
         feature = None
 
@@ -74,18 +62,16 @@ class AdaFaceFeature:
             bgr_tensor_input = self.to_input(aligned_rgb_img)
             if bgr_tensor_input is not None:
                 feature, _ = self.model(bgr_tensor_input)
-            else:
-                print("无法提取脸部特征向量")
             return feature
         except Exception as err:
             raise Exception("无法提取脸部特征向量") from err
-        
-    def byte_get_represent(self, path):
-        """获取脸部特征向量
-        """
 
+    def byte_get_represent(self, image: Image.Image):
+        """获取脸部特征向量"""
         try:
-            aligned_rgb_img = align.get_aligned_face(path)
+            aligned_rgb_img = align.get_aligned_face(
+                image_path=None, rgb_pil_image=image
+            )
             bgr_tensor_input = self.to_input(aligned_rgb_img)
             if bgr_tensor_input is not None:
                 feature, _ = self.model(bgr_tensor_input)

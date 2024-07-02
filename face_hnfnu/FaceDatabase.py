@@ -1,25 +1,26 @@
 import numpy as np
 import faiss
 import sqlite3
-from face_hnfnu.__init__ import FAISS_DATABASE_PATH, INDEX_DATABASE_PATH
+from pathlib import Path
+from face_hnfnu.Config import ConfigModel
 
 class FaceDatabase:
-    def __init__(self, dimension=512, faiss_path=FAISS_DATABASE_PATH, index_path=INDEX_DATABASE_PATH):
+    def __init__(self, dimension = 512, config : ConfigModel = None):
         """
         初始化 FaceDatabase 类
         Parameters:
         dimension (int): 人脸向量的维度，默认为 512
         """
-        self.faiss_path = faiss_path  # 保存 Faiss 数据库路径
-        self.index_path = index_path  # 保存人脸 id 表路径
+        self.faiss_path = Path(config.FAISS_DATABASE_PATH)  # 保存 Faiss 数据库路径
+        self.index_path = Path(config.INDEX_DATABASE_PATH) # 保存人脸 id 表路径
         self.dimension = dimension  # 保存人脸向量的维度
-        if faiss_path.exists():
-            self.loadDatabase(faiss_path)  # 从指定路径加载数据库
+        if self.faiss_path.exists():
+            self.loadDatabase(self.faiss_path)  # 从指定路径加载数据库
         else:
             self.index = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
-        if not index_path.is_file():
-            index_path.parent.mkdir(parents=True, exist_ok=True)
-            index_path.touch(exist_ok=True)
+        if not self.index_path.is_file():
+            self.index_path.parent.mkdir(parents=True, exist_ok=True)
+            self.index_path.touch(exist_ok=True)
             self.query_database("CREATE TABLE ids (id INTEGER PRIMARY KEY NOT NULL, name TEXT UNIQUE);", ())  # 创建人脸 id 表
 
     def addFace(self, face_id, face_vector):
@@ -54,8 +55,8 @@ class FaceDatabase:
             np.expand_dims(query_vector, axis=0), self.index.ntotal
         )  # 使用 Faiss 进行搜索
         if distances[0][0] > threshold:
-            name = self.query_database("SELECT name FROM ids WHERE id=?", (indices[0][0],))
-            return name, distances[0][0]  # 返回人脸 id 和距离
+            name = self.query_database("SELECT name FROM ids WHERE id = ?", (int(indices[0][0]),))
+            return name[0], distances[0][0]  # 返回人脸 id 和距离
         else:
             return None  # 如果没有超过阈值的则返回 None
 
@@ -65,9 +66,9 @@ class FaceDatabase:
         Parameters:
         face_id: 待删除的人脸 id
         """
-        id = self.query_database("SELECT id FROM ids WHERE name=?", (face_id,))
+        id = self.query_database("SELECT id FROM ids WHERE name = ?", (face_id,))
         self.index.remove_ids(id)  # 从 Faiss 索引中删除人脸向量
-        self.query_database("DELETE FROM ids WHERE id=?", (id,))  # 删除人脸 id 表中的人脸 id
+        self.query_database("DELETE FROM ids WHERE id = ?", (id,))  # 删除人脸 id 表中的人脸 id
 
     def __len__(self):
         """
