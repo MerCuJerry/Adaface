@@ -1,7 +1,7 @@
 import numpy as np
 import faiss
 import sqlite3
-from .__init__ import FAISS_DATABASE_PATH, INDEX_DATABASE_PATH
+from face_hnfnu.__init__ import FAISS_DATABASE_PATH, INDEX_DATABASE_PATH
 
 class FaceDatabase:
     def __init__(self, dimension=512, faiss_path=FAISS_DATABASE_PATH, index_path=INDEX_DATABASE_PATH):
@@ -102,6 +102,15 @@ class FaceDatabase:
         self.index = faiss.read_index(self.index_path)
 
     def query_database(self, sql, query):
+        """访问数据库
+
+        Args:
+            sql (_type_): SQL语句
+            query (_type_): 参数(可选)
+
+        Returns:
+           result: 访问结果(Nonable)
+        """
         conn = sqlite3.connect(self.index_path, check_same_thread=False)
         cursor = conn.cursor()
         cursor.execute(sql, query)

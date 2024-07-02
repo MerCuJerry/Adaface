@@ -1,7 +1,7 @@
-from .AdaFaceFeature import AdaFaceFeature
-from .FaceDatabase import FaceDatabase
+from face_hnfnu.AdaFaceFeature import AdaFaceFeature
+from face_hnfnu.FaceDatabase import FaceDatabase
 from multiprocessing import Pool
-from .__init__ import FAISS_DATABASE_PATH, INDEX_DATABASE_PATH
+from face_hnfnu.__init__ import FAISS_DATABASE_PATH, INDEX_DATABASE_PATH
 import asyncio
 
 class Config:
@@ -18,6 +18,6 @@ class Config:
         self.face_database.saveDatabase(faiss_path)
         self.pool.close()
         self.pool.join()
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
 
 config = Config()

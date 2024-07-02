@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBasic
 from fastapi.responses import HTMLResponse
-from .Config import config
+from face_hnfnu.Config import config
 
 app = FastAPI(
     title="AdaFace API",
@@ -19,7 +19,10 @@ async def _live():
 async def _verify(): 
     query_vector = config.ada_face_feature.byte_get_represent("img")
     thisresult = config.pool.apply_async(config.face_database.searchSimilarFaces, args=(query_vector.detach().numpy()[0], 0.75)).get()
-    return {"result":"True", "most_similar_face": thisresult[0]}
+    if thisresult:
+        return {"result":"True", "most_similar_face": thisresult[0]}
+    else:
+        return {"result":"False"}
 
 @app.post("/add_face") # add a face image to the database
 async def _add_face():
