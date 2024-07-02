@@ -25,18 +25,27 @@ async def start_server():
             },
         },
     }
-    server_config = uvicorn.Config(app, host=config.WEB_SERVER_HOST, port=config.WEB_SERVER_PORT, log_config=LOGGING_CONFIG, log_level="info")
+    server_config = uvicorn.Config(
+        app,
+        host=config.WEB_SERVER_HOST,
+        port=config.WEB_SERVER_PORT,
+        log_config=LOGGING_CONFIG,
+        log_level="info",
+    )
     server = uvicorn.Server(server_config)
     await server.serve()
-    
+
+
 async def shutdown_event():
     await adaface.shutdown_event()
     logger.info("Server Shutdown")
+
 
 def signal_handler(sig, frame):
     loop = asyncio.get_event_loop()
     loop.create_task(shutdown_event())
     loop.stop()
+
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)

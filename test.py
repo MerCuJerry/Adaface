@@ -8,6 +8,7 @@ import asyncio
 async def test():
 
     await asyncio.sleep(2)
+    #注册测试
     DIR_PATH = Path.cwd() / "test_reg"
     for img_path in paths.list_images(DIR_PATH):
         print(img_path)
@@ -19,7 +20,6 @@ async def test():
     
     #图片检测测试
     TEST_PATH = Path.cwd() / "test"
-    threshold = -1000
     for img_path in paths.list_images(TEST_PATH):
         with open(img_path, "rb") as f:
             async with AsyncClient() as client:
@@ -28,13 +28,14 @@ async def test():
         print(f"The most similar face of {img_path} is {response.json()}")
 
 if __name__ == '__main__':
+    #删除原有数据库
     DB = Path.cwd() / "data" / "face_db.sqlite"
-    DB.rename(DB.with_name("bak"))
+    if DB.exists():
+        DB.rename(DB.with_name("bak"))
+    #启动服务并测试
     loop = asyncio.new_event_loop()
     loop.run_until_complete(adaface.startup_event())
     loop.create_task(start_server())
     loop.run_until_complete(test())
-    #处理过的人脸照片，以做面部对齐处理,大小： 112*112
-    #图片注册
     loop.create_task(shutdown_event())
     loop.stop()
