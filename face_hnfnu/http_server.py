@@ -31,7 +31,7 @@ async def _verify(file: UploadFile = File()):
             args=(query_vector.detach().numpy()[0], config.SIMILARITY_THRESHOLD),
         ).get()
         if thisresult is not None:
-            return {"result": "True", "most_similar_face": thisresult[0]}
+            return {"result": "True", "most_similar_face": thisresult[0], "distance": thisresult[1]}
         else:
             return {"result": "False", "error" : "No similar face found"}
     except Exception as e:

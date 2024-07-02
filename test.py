@@ -25,7 +25,10 @@ async def test():
             async with AsyncClient() as client:
                 response = await client.post("http://127.0.0.1:30035/verify", files={"file": (img_path, f, "image/jpeg")})
                 await asyncio.sleep(1)
-        print(f"The most similar face of {img_path} is {response.json()}")
+        if response.json()['result'] == "True":
+            print(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
+        else:
+            print(response.json()["error"])
 
 if __name__ == '__main__':
     #删除原有数据库

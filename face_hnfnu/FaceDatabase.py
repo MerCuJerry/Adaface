@@ -66,7 +66,7 @@ class FaceDatabase:
             name = self.query_database(
                 "SELECT name FROM ids WHERE id = ?", (int(indices[0][0]),)
             )
-            return name[0], distances[0][0]  # 返回人脸 id 和距离
+            return name[0], float(distances[0][0])  # 返回人脸 id 和距离
         else:
             return None  # 如果没有超过阈值的则返回 None
 
