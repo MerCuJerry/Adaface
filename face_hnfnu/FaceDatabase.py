@@ -70,16 +70,17 @@ class FaceDatabase:
         else:
             return None  # 如果没有超过阈值的则返回 None
 
-    def removeFaceById(self, face_id):
+    def removeFaceById(self, face_id: str):
         """
         根据人脸 id 删除数据库内的人脸向量
         Parameters:
         face_id: 待删除的人脸 id
         """
+        print(face_id)
         id = self.query_database("SELECT id FROM ids WHERE name = ?", (face_id,))
-        self.index.remove_ids(id)  # 从 Faiss 索引中删除人脸向量
+        self.index.remove_ids(np.array([id[0]]))  # 从 Faiss 索引中删除人脸向量
         self.query_database(
-            "DELETE FROM ids WHERE id = ?", (int(id),)
+            "DELETE FROM ids WHERE id = ?", (int(id[0]),)
         )  # 删除人脸 id 表中的人脸 id
 
     def __len__(self):

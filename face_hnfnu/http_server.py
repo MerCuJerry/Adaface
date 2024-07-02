@@ -54,5 +54,11 @@ async def _add_face(file: UploadFile = File()):
 
 
 @app.post("/remove_face")  # remove a face image from the database
-async def _remove_face():
-    pass
+async def _remove_face(face_id: str):
+    try:
+        adaface.face_database.removeFaceById(face_id)
+        logger.info("remove face success")
+        return {"result": "True"}
+    except Exception as e:
+        logger.error(f"remove face failed with error: {str(e)}")
+        return {"result": "False", "error": str(e)}

@@ -21,6 +21,7 @@ class ConfigModel(BaseModel):
         default=INDEX_DATABASE_PATH.as_posix(), alias="index_database_path"
     )
     SIMILARITY_THRESHOLD: float = Field(default=-1000, alias="threshold")
+    THREAD_COUNT: int = Field(default=4, alias="thread_count")
 
 
 server_config = ConfigModel().model_validate_json(SERVER_CONFIG_PATH.read_text())

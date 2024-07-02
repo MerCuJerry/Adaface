@@ -31,6 +31,22 @@ async def test():
             logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
         else:
             logger.warning(response.json()["error"])
+    
+    #删除测试
+    img_id = "/home/mercujerry/WorkingDir/face_hnfnu/adaface-main/test_reg/fbeff_109.73.jpg"
+    async with AsyncClient() as client:
+        response = await client.post(f"{url}/remove_face", params={"face_id": img_id})
+        await asyncio.sleep(1)
+    
+    with open(img_id, "rb") as f:
+        async with AsyncClient() as client:
+            response = await client.post(f"{url}/verify", files={"file": (img_path, f, "image/jpeg")})
+            await asyncio.sleep(1)
+        if response.json()['result'] == "True":
+            logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
+        else:
+            logger.warning(response.json()["error"])
+
 
 if __name__ == '__main__':
     #删除原有数据库

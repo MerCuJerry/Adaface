@@ -11,7 +11,7 @@ class AdafaceServer():
     async def startup_event(self):
         self.ada_face_feature = AdaFaceFeature(config=server_config)
         self.face_database = FaceDatabase(config=server_config)
-        self.pool = Pool(processes=12)
+        self.pool = Pool(processes=server_config.THREAD_COUNT)
         self.ada_face_feature.load_pretrained_model()
     
     async def shutdown_event(self):
