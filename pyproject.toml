@@ -14,7 +14,9 @@ dependencies = [
     "packaging",
     "torchvision >= 0.18.0",
     "pytorch_lightning >= 2.2.5",
-    "fastapi >= 0.111.0"
+    "fastapi >= 0.111.0",
+    "websockets",
+    "yuface >= 2023.5.1"
 ]
 requires-python = " >= 3.11, <3.12"
 license = { text = "MIT" }
