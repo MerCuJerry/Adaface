@@ -124,4 +124,4 @@ class AdaFaceFeature:
                 feature, _ = self.model(bgr_tensor_input)
             return feature.detach()
         except Exception as err:
-            raise Exception(f"无法提取脸部特征向量 {err}") from err
+            raise Exception(f"无法提取脸部特征向量, caused by:{err}") from err

@@ -15,7 +15,7 @@ class FaceDatabase:
         self.faiss_path = Path(config.FAISS_DATABASE_PATH)  # 保存 Faiss 数据库路径
         self.index_path = Path(config.INDEX_DATABASE_PATH)  # 保存人脸 id 表路径
         self.dimension = dimension  # 保存人脸向量的维度
-        if self.faiss_path.exists():
+        if self.faiss_path.is_file():
             self.loadDatabase(self.faiss_path)  # 从指定路径加载数据库
         else:
             self.index = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
@@ -102,35 +102,28 @@ class FaceDatabase:
     def saveDatabase(self):
         """
         保存数据库到指定路径
-
-        Args:
-            path (_type_): _description_
         """
         faiss.write_index(self.index, self.faiss_path.open("wb"))
 
     def loadDatabase(self):
         """
         从指定路径加载数据库
-
-        Args:
-            path (_type_): _description_
         """
         self.index = faiss.read_index(self.index_path)
 
-    def query_database(self, sql, query):
+    def query_database(self, sql: str, query: tuple):
         """访问数据库
 
         Args:
-            sql (_type_): SQL语句
-            query (_type_): 参数(可选)
+            sql (str): SQL语句
+            query (tuple): 参数(可选)
 
         Returns:
            result: 访问结果(Nonable)
         """
-        conn = sqlite3.connect(self.index_path, check_same_thread=False)
-        cursor = conn.cursor()
-        cursor.execute(sql, query)
-        result = cursor.fetchone()
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(self.index_path, check_same_thread=False) as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql, query)
+            result = cursor.fetchone()
+            conn.commit()
         return result

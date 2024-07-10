@@ -2,7 +2,7 @@
 name = "face-hnfnu"
 version = "0.1"
 description = "simple face detector"
-authors = []
+authors = [{ name = "MerCuJerry", email = "mercujerry@gmail.com" }]
 dependencies = [
     "opencv-python >= 4.5.5.62",
     "numpy >= 1.22.2",
