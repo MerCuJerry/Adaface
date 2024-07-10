@@ -110,9 +110,13 @@ class AdaFaceFeature:
         """获取脸部特征向量"""
         try:
             w, h = image.size
-            aspect_ratio = w / h if w < h else h / w
             if w > 960 or h > 960:
-                image.thumbnail((960 * aspect_ratio, 960 * aspect_ratio))
+                if w < h:
+                    aspect_ratio = w / h
+                    image.thumbnail((960 * aspect_ratio, 960))
+                else:
+                    aspect_ratio = h / w
+                    image.thumbnail((960, 960 * aspect_ratio))
             _conf, bboxes, landmark = detect(np.array(image),conf=0.75)
             aligned_rgb_img = FaceAlignment.align_process(np.array(image), bboxes, landmark, image_size=[112, 112])
             bgr_tensor_input = self.to_input(aligned_rgb_img)

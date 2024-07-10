@@ -1,4 +1,3 @@
-from imutils import paths
 from pathlib import Path
 import signal
 from PIL import Image
@@ -17,21 +16,20 @@ async def test():
     await asyncio.sleep(2)
     #注册测试
     DIR_PATH = Path.cwd() / "test_reg"
-    for img_path in paths.list_images(DIR_PATH):
+    for img_path in DIR_PATH.glob("*.jpg"):
         logger.warning(f"Registering {img_path}")
-        with open(img_path, "rb") as f:
-            async with AsyncClient() as client:
-                response = await client.post(f"{url}/add_face", files={"file": (img_path, f, "image/jpeg")})
-                await asyncio.sleep(1)
+        async with AsyncClient() as client:
+            response = await client.post(f"{url}/add_face", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+            await asyncio.sleep(1)
+
     #图片检测测试
     TEST_PATH = Path.cwd() / "test"
-    for img_path in paths.list_images(TEST_PATH):
-        with open(img_path, "rb") as f:
-            async with AsyncClient() as client:
-                response = await client.post(f"{url}/verify", files={"file": (img_path, f, "image/jpeg")})
-                await asyncio.sleep(1)
+    for img_path in TEST_PATH.glob("*.jpg"):
+        async with AsyncClient() as client:
+            response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+            await asyncio.sleep(1)
         if response.json()['result'] == "True":
-            logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
+            logger.warning(f"The most similar face of {img_path.as_posix()} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
         else:
             logger.warning(response.json()["error"])
     
@@ -40,26 +38,29 @@ async def test():
     async with AsyncClient() as client:
         response = await client.post(f"{url}/remove_face", params={"face_id": img_id.as_posix()})
         await asyncio.sleep(1)
-    
-    with open(img_id, "rb") as f:
-        async with AsyncClient() as client:
-            response = await client.post(f"{url}/verify", files={"file": (img_path, f, "image/jpeg")})
-            await asyncio.sleep(1)
-        if response.json()['result'] == "True":
-            logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
-        else:
-            logger.warning(response.json()["error"])
+
+    async with AsyncClient() as client:
+        response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+        await asyncio.sleep(1)
+    if response.json()['result'] == "True":
+        logger.warning(f"The most similar face of {img_path} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
+    else:
+        logger.warning(response.json()["error"])
         
     #压力测试
     img_path = Path.cwd() / "test" / "img1.jpg"
     start_time = time.time()
     img = Image.open(io.BytesIO(img_path.read_bytes()))
     w, h = img.size
-    aspect_ratio = w / h if w < h else h / w
     if w > 960 or h > 960:
-        img.thumbnail((960 * aspect_ratio, 960 * aspect_ratio))
+        if w < h:
+            aspect_ratio = w / h
+            img.thumbnail((960 * aspect_ratio, 960))
+        else:
+            aspect_ratio = h / w
+            img.thumbnail((960, 960 * aspect_ratio))
     with io.BytesIO() as output:
-        img.save(output, format="jpeg")
+        img.save(output, format="webp")
         async with websockets.connect(f"ws://{config.WEB_SERVER_HOST}:{config.WEB_SERVER_PORT}/ws/test") as client:
             for i in range(100):
                 await client.send(output.getvalue())

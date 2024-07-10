@@ -4,12 +4,10 @@ version = "0.1"
 description = "simple face detector"
 authors = []
 dependencies = [
-    "imutils >= 0.5.4",
     "opencv-python >= 4.5.5.62",
     "numpy >= 1.22.2",
     "uvicorn >= 0.17.6",
     "loguru >= 0.6.0",
-    "PyYAML >= 6.0.1",
     "faiss-cpu >= 1.8.0",
     "packaging",
     "torchvision >= 0.18.0",
