@@ -36,22 +36,14 @@ async def start_server():
     await server.serve()
 
 
-async def shutdown_event():
-    await adaface.shutdown_event()
-    await procpool.shutdown_event()
-    logger.info("Server Shutdown")
-
-
-def signal_handler(sig, frame):
-    loop = asyncio.get_event_loop()
-    loop.create_task(shutdown_event())
-    loop.stop()
-
-
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(adaface.startup_event())
-    loop.run_until_complete(procpool.startup_event())
-    loop.run_until_complete(start_server())
+    try:
+        adaface.startup_event()
+        procpool.startup_event()
+        asyncio.run(start_server())
+    except KeyboardInterrupt:
+        pass
+    finally:
+        logger.info("Server Shutdown")
+        procpool.shutdown_event()
+        adaface.shutdown_event()

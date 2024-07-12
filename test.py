@@ -69,25 +69,9 @@ async def test():
     end_time = time.time()
     logger.warning(f"Finished stress test in {end_time - start_time} seconds")
 
-    #压力测试2
-    start_time = time.time()
-    for i in range(100):
-        response =  procpool.pool.apply_async(adaface.verify_face, args=(img,config.SIMILARITY_THRESHOLD)).get()
-        logger.warning(f"{response}")
-    end_time = time.time()
-    logger.warning(f"Finished stress test 2 in {end_time - start_time} seconds")
-
 if __name__ == '__main__':
-    signal.signal(signal.SIGINT, signal_handler)
-    #删除原有数据库
-    DB = Path.cwd() / "data" / "face_db.sqlite"
-    if DB.exists():
-        DB.rename(DB.with_name("bak"))
+    #signal.signal(signal.SIGINT, signal_handler)
     #启动服务并测试
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(adaface.startup_event())
-    loop.run_until_complete(procpool.startup_event())
-    loop.create_task(start_server())
     loop.run_until_complete(test())
-    loop.create_task(shutdown_event())
     loop.stop()

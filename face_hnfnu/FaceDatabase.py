@@ -16,9 +16,9 @@ class FaceDatabase:
         self.index_path = Path(config.INDEX_DATABASE_PATH)  # 保存人脸 id 表路径
         self.dimension = dimension  # 保存人脸向量的维度
         if self.faiss_path.is_file():
-            self.loadDatabase(self.faiss_path)  # 从指定路径加载数据库
+            self.loadDatabase()  # 从指定路径加载数据库
         else:
-            self.index = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
+            self.faiss = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
         if not self.index_path.is_file():
             self.index_path.parent.mkdir(parents=True, exist_ok=True)
             self.index_path.touch(exist_ok=True)
@@ -42,7 +42,7 @@ class FaceDatabase:
             sql = "INSERT INTO ids (id, name) VALUES (?,?)"
             query = self.__len__(), str(face_id)
             self.query_database(sql, query)  # 插入人脸 id 表
-            self.index.add(
+            self.faiss.add(
                 np.expand_dims(face_vector, axis=0)
             )  # 向 Faiss 索引中添加人脸向量
         except sqlite3.IntegrityError as err:
@@ -59,8 +59,8 @@ class FaceDatabase:
         Returns:
         tuple or None: 返回超过阈值的最相似人脸向量的id和对应的距离，如果没有超过阈值的，则返回 None
         """
-        distances, indices = self.index.search(
-            np.expand_dims(query_vector, axis=0), self.index.ntotal
+        distances, indices = self.faiss.search(
+            np.expand_dims(query_vector, axis=0), self.faiss.ntotal
         )  # 使用 Faiss 进行搜索
         if distances[0][0] > threshold:
             name = self.query_database(
@@ -80,7 +80,7 @@ class FaceDatabase:
         """
         print(face_id)
         id = self.query_database("SELECT id FROM ids WHERE name = ?", (face_id,))
-        self.index.remove_ids(np.array([id[0]]))  # 从 Faiss 索引中删除人脸向量
+        self.faiss.remove_ids(np.array([id[0]]))  # 从 Faiss 索引中删除人脸向量
         self.query_database(
             "DELETE FROM ids WHERE id = ?", (int(id[0]),)
         )  # 删除人脸 id 表中的人脸 id
@@ -91,25 +91,25 @@ class FaceDatabase:
         Returns:
         int: 人脸向量数量
         """
-        return self.index.ntotal  # 返回保存的人脸向量数量
+        return self.faiss.ntotal  # 返回保存的人脸向量数量
 
     def clearDatabase(self):
         """
         清空数据库，删除所有的人脸向量
         """
-        self.index.reset()  # 重置 Faiss 索引
+        self.faiss.reset()  # 重置 Faiss 索引
 
     def saveDatabase(self):
         """
         保存数据库到指定路径
         """
-        faiss.write_index(self.index, self.faiss_path.open("wb"))
+        faiss.write_index(self.faiss, self.faiss_path.as_posix())
 
     def loadDatabase(self):
         """
         从指定路径加载数据库
         """
-        self.index = faiss.read_index(self.index_path)
+        self.faiss = faiss.read_index(self.faiss_path.as_posix())
 
     def query_database(self, sql: str, query: tuple):
         """访问数据库

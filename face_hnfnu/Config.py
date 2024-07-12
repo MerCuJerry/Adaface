@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 # Paths
-FAISS_DATABASE_PATH = Path.cwd() / "data" / "face_db.bin"
+FAISS_DATABASE_PATH = Path.cwd() / "data" / "face_db.index"
 INDEX_DATABASE_PATH = Path.cwd() / "data" / "face_db.sqlite"
 SERVER_CONFIG_PATH = Path.cwd() / "config" / "config.json"
 

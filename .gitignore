@@ -168,3 +168,6 @@ test/
 test_reg/
 models/
 data/
+
+# viztracer
+result.json
