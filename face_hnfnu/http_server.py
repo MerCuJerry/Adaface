@@ -34,24 +34,31 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     logger.info(f"websocket connected with client_id: {client_id}")
     try:
         while True:
-            data = await websocket.receive_bytes()
-            image = Image.open(io.BytesIO(data))
-            thisresult = procpool.pool.apply_async(
-                adaface.verify_face,
-                args=(image, config.SIMILARITY_THRESHOLD),
-            ).get()
-            if thisresult is not None:
-                await websocket.send_json(
-                    {
-                        "result": "True",
-                        "most_similar_face": thisresult[0],
-                        "distance": thisresult[1],
-                    }
-                )
-            else:
-                await websocket.send_json(
-                    {"result": "False", "error": "No similar face found"}
-                )
+            try:
+                data = await websocket.receive_bytes()
+                image = Image.open(io.BytesIO(data))
+                thisresult = procpool.pool.apply_async(
+                    adaface.verify_face,
+                    args=(image, config.SIMILARITY_THRESHOLD),
+                ).get()
+                if thisresult is None:
+                    await websocket.send_json(
+                        {"result": "False", "error": "No similar face found"}
+                    )
+                elif thisresult is not None and thisresult[0] is not None:
+                    await websocket.send_json(
+                        {
+                            "result": "True",
+                            "most_similar_face": thisresult[0],
+                            "distance": thisresult[1],
+                        }
+                    )
+                else:
+                    raise thisresult[1]
+            except WebSocketDisconnect as err:
+                raise WebSocketDisconnect(reason=str(err))
+            except Exception as err:
+                logger.error(f"verify face failed with error: {str(err)}")
     except WebSocketDisconnect:
         logger.info("websocket disconnected")
 
@@ -65,17 +72,19 @@ async def _verify(file: UploadFile = File()):
             adaface.verify_face,
             args=(image, config.SIMILARITY_THRESHOLD),
         ).get()
-        if thisresult is not None:
+        if thisresult is None:
+            return {"result": "False", "error": "No similar face found"}
+        elif thisresult is not None and thisresult[0] is not None:
             return {
                 "result": "True",
                 "most_similar_face": thisresult[0],
                 "distance": thisresult[1],
             }
         else:
-            return {"result": "False", "error": "No similar face found"}
-    except Exception as e:
-        logger.error(f"verify face failed with error: {str(e)}")
-        return {"result": "False", "error": str(e)}
+            raise thisresult[1]
+    except Exception as err:
+        logger.error(f"verify face failed with error: {str(err)}")
+        return {"result": "False", "error": str(err)}
 
 
 @app.post("/add_face")  # add a face image to the database
@@ -87,9 +96,9 @@ async def _add_face(file: UploadFile = File()):
         adaface.face_database.addFace(file.filename, vector.detach().numpy()[0])
         logger.info("add face success")
         return {"result": "True"}
-    except Exception as e:
-        logger.error(f"add face failed with error: {str(e)}")
-        return {"result": "False", "error": str(e)}
+    except Exception as err:
+        logger.error(f"add face failed with error: {str(err)}")
+        return {"result": "False", "error": str(err)}
 
 
 @app.post("/remove_face")  # remove a face image from the database
@@ -98,6 +107,6 @@ async def _remove_face(face_id: str):
         adaface.face_database.removeFaceById(face_id)
         logger.info("remove face success")
         return {"result": "True"}
-    except Exception as e:
-        logger.error(f"remove face failed with error: {str(e)}")
-        return {"result": "False", "error": str(e)}
+    except Exception as err:
+        logger.error(f"remove face failed with error: {str(err)}")
+        return {"result": "False", "error": str(err)}

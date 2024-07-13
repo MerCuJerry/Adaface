@@ -78,7 +78,6 @@ class FaceDatabase:
         Parameters:
         face_id: 待删除的人脸 id
         """
-        print(face_id)
         id = self.query_database("SELECT id FROM ids WHERE name = ?", (face_id,))
         self.faiss.remove_ids(np.array([id[0]]))  # 从 Faiss 索引中删除人脸向量
         self.query_database(

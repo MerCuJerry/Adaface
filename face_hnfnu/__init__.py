@@ -7,14 +7,20 @@ from face_hnfnu.Config import server_config
 
 class ProcPool:
     def startup_event(self):
+        """
+        Called when server is starting up. Initializes the multiprocessing pool.
+        """
         set_start_method("spawn")
         self.pool = Pool(
             processes=server_config.THREAD_COUNT,
             initializer=signal.signal,
-            initargs=(signal.SIGINT, signal.SIG_IGN),
+            initargs=(signal.SIGINT, signal.SIG_IGN),  # ignore sigint signal
         )
 
     def shutdown_event(self):
+        """
+        Called when server is shutting down
+        """
         self.pool.terminate()
         self.pool.join()
 
@@ -31,9 +37,13 @@ class AdafaceServer:
     def shutdown_event(self):
         self.face_database.saveDatabase()
 
-    def verify_face(self, img, threshold):
-        q_vec = self.ada_face_feature.byte_get_represent(img)
-        result = self.face_database.searchSimilarFaces(q_vec.numpy()[0], threshold)
+    def verify_face(self, img, threshold) -> tuple:
+        try:
+            result = self.face_database.searchSimilarFaces(
+                self.ada_face_feature.byte_get_represent(img).numpy()[0], threshold
+            )
+        except Exception as err:
+            result = (None, err)
         return result
 
 

@@ -1,6 +1,5 @@
 import uvicorn
 import asyncio
-import signal
 from face_hnfnu.http_server import app
 from face_hnfnu.log import logger
 from face_hnfnu.__init__ import adaface, procpool

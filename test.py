@@ -1,8 +1,5 @@
 from pathlib import Path
-import signal
 from PIL import Image
-from face_hnfnu.__main__  import start_server, shutdown_event, signal_handler
-from face_hnfnu.__init__  import adaface, procpool
 from face_hnfnu.Config import server_config as config
 from face_hnfnu.log import logger
 from httpx import AsyncClient
