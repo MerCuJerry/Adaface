@@ -57,8 +57,15 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                     raise thisresult[1]
             except WebSocketDisconnect as err:
                 raise WebSocketDisconnect(reason=str(err))
+            except ValueError as err:
+                await websocket.send_json(
+                    {"result": "False", "error": f"{str(err)}"}
+                )
             except Exception as err:
                 logger.error(f"verify face failed with error: {str(err)}")
+                await websocket.send_json(
+                    {"result": "False", "error": f"{str(err)}"}
+                )
     except WebSocketDisconnect:
         logger.info("websocket disconnected")
 

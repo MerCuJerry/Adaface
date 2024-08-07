@@ -128,6 +128,8 @@ class AdaFaceFeature:
                     aspect_ratio = h / w
                     image.thumbnail((960, 960 * aspect_ratio))
             _conf, bboxes, landmark = detect(np.array(image), conf=0.75)
+            if len(bboxes) == 0:
+                raise ValueError("未检测到人脸")
             aligned_rgb_img = FaceAlignment.align_process(
                 np.array(image), bboxes, landmark, image_size=[112, 112]
             )
@@ -136,4 +138,4 @@ class AdaFaceFeature:
                 feature, _ = self.model(bgr_tensor_input)
             return feature.detach()
         except Exception as err:
-            raise Exception(f"无法提取脸部特征向量, caused by:{err}") from err
+            raise ValueError(f"无法提取脸部特征向量, caused by:{err}") from err
