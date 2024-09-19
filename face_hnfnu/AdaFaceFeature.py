@@ -98,7 +98,7 @@ class AdaFaceFeature:
         assert architecture in self.adaface_models.keys()
         model = build_model(architecture)
         statedict = torch.load(
-            self.adaface_models[architecture], map_location=torch.device("cpu")
+            self.adaface_models[architecture], map_location=torch.device("cpu"), weights_only=True
         )["state_dict"]
         model_statedict = {
             key[6:]: val for key, val in statedict.items() if key.startswith("model.")
@@ -136,6 +136,6 @@ class AdaFaceFeature:
             bgr_tensor_input = self.to_input(aligned_rgb_img)
             if bgr_tensor_input is not None:
                 feature, _ = self.model(bgr_tensor_input)
-            return feature.detach()
+            return feature
         except Exception as err:
             raise ValueError(f"无法提取脸部特征向量, caused by:{err}") from err

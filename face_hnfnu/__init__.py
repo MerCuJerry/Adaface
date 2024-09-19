@@ -40,7 +40,7 @@ class AdafaceServer:
     def verify_face(self, img, threshold) -> tuple:
         try:
             result = self.face_database.searchSimilarFaces(
-                self.ada_face_feature.byte_get_represent(img).numpy()[0], threshold
+                self.ada_face_feature.byte_get_represent(img).detach().numpy(), threshold
             )
         except Exception as err:
             result = (None, err)

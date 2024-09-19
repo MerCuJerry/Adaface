@@ -18,7 +18,7 @@ class FaceDatabase:
         if self.faiss_path.is_file():
             self.loadDatabase()  # 从指定路径加载数据库
         else:
-            self.faiss = faiss.IndexFlatIP(dimension)  # 创建 Faiss 的余弦相似度索引
+            self.faiss = faiss.IndexHNSWFlat(dimension, dimension // 2, faiss.METRIC_INNER_PRODUCT)# 创建 Faiss 的余弦相似度索引
         if not self.index_path.is_file():
             self.index_path.parent.mkdir(parents=True, exist_ok=True)
             self.index_path.touch(exist_ok=True)
@@ -34,21 +34,19 @@ class FaceDatabase:
         face_id: 人脸 id
         face_vector: 人脸向量
         """
-        if face_vector.shape[0] != self.dimension:
+        if face_vector.shape[1] != self.dimension:
             raise ValueError(
                 "Face vector dimension does not match the database dimension"
             )  # 抛出维度不匹配的异常
-        try:
-            sql = "INSERT INTO ids (id, name) VALUES (?,?)"
-            query = self.__len__(), str(face_id)
-            self.query_database(sql, query)  # 插入人脸 id 表
-            self.faiss.add(
-                np.expand_dims(face_vector, axis=0)
-            )  # 向 Faiss 索引中添加人脸向量
-        except sqlite3.IntegrityError as err:
-            raise ValueError(
-                f"Face id {face_id} already exists in the database"
-            ) from err  # 抛出 id 已存在的异常
+        sql = "INSERT INTO ids (id, name) VALUES (?,?)"
+        query = self.__len__(), str(face_id)
+        self.query_database(sql, query)  # 插入人脸 id 表
+        self.faiss.train(
+            face_vector
+        )
+        self.faiss.add(
+            face_vector
+        )  # 向 Faiss 索引中添加人脸向量
 
     def searchSimilarFaces(self, query_vector, threshold) -> tuple | None:
         """
@@ -60,7 +58,7 @@ class FaceDatabase:
         tuple or None: 返回超过阈值的最相似人脸向量的id和对应的距离，如果没有超过阈值的，则返回 None
         """
         distances, indices = self.faiss.search(
-            np.expand_dims(query_vector, axis=0), self.faiss.ntotal
+            query_vector, 1
         )  # 使用 Faiss 进行搜索
         if distances[0][0] > threshold:
             name = self.query_database(

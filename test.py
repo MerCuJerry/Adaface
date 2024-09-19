@@ -49,11 +49,10 @@ async def test():
             img.thumbnail((960, 960 * aspect_ratio))
     with io.BytesIO() as output:
         img.save(output, format="webp")
-        async with websockets.connect(f"ws://{config.WEB_SERVER_HOST}:{config.WEB_SERVER_PORT}/ws/test") as client:
+        async with AsyncClient() as client:
             for i in range(100):
-                await client.send(output.getvalue())
-                response = await client.recv()
-                logger.warning(f"Received response: {response}")
+                response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+                logger.warning(f"The most similar face of {img_path.as_posix()} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
     end_time = time.time()
     logger.warning(f"Finished stress test in {end_time - start_time} seconds")
 
@@ -74,13 +73,25 @@ async def test_stress_only():
             img.thumbnail((960, 960 * aspect_ratio))
     with io.BytesIO() as output:
         img.save(output, format="webp")
-        async with websockets.connect(f"ws://{config.WEB_SERVER_HOST}:{config.WEB_SERVER_PORT}/ws/test") as client:
+        async with AsyncClient() as client:
             for i in range(100):
-                await client.send(output.getvalue())
-                response = await client.recv()
-                logger.warning(f"Received response: {response}")
+                response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+                logger.warning(f"The most similar face of {img_path.as_posix()} is {response.json()['most_similar_face']} with distance {response.json()['distance']}")
+    '''
+        task = [verify(url,img_path) for i in range(100)]
+    for task in asyncio.as_completed(task):
+        result = await task
+        logger.info(f"The most similar face of {img_path.as_posix()} is {result.json()['most_similar_face']} with distance {result.json()['distance']}")
+    '''
+
     end_time = time.time()
     logger.warning(f"Finished stress test in {end_time - start_time} seconds")
+
+async def verify(url, img_path):
+    async with asyncio.Semaphore(10):
+        async with AsyncClient() as client:
+            response = await client.post(f"{url}/verify", files={"file": (img_path.as_posix(), img_path.read_bytes(), "image/jpeg")})
+    return response
 
 if __name__ == '__main__':
     #signal.signal(signal.SIGINT, signal_handler)

@@ -7,6 +7,8 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
+import concurrent.futures as futures
+from asyncio import get_event_loop
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBasic
 from fastapi.responses import HTMLResponse
 from face_hnfnu.__init__ import adaface, procpool
@@ -37,10 +39,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             try:
                 data = await websocket.receive_bytes()
                 image = Image.open(io.BytesIO(data))
-                thisresult = procpool.pool.apply_async(
-                    adaface.verify_face,
-                    args=(image, config.SIMILARITY_THRESHOLD),
-                ).get()
+                with futures.ThreadPoolExecutor() as pool:
+                    thisresult = await get_event_loop().run_in_executor(pool, adaface.verify_face, image, config.SIMILARITY_THRESHOLD)
                 if thisresult is None:
                     await websocket.send_json(
                         {"result": "False", "error": "No similar face found"}
@@ -69,16 +69,13 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except WebSocketDisconnect:
         logger.info("websocket disconnected")
 
-
 @app.post("/verify")  # verify a face image
 async def _verify(file: UploadFile = File()):
     try:
         content = await file.read()
         image = Image.open(io.BytesIO(content))
-        thisresult = procpool.pool.apply_async(
-            adaface.verify_face,
-            args=(image, config.SIMILARITY_THRESHOLD),
-        ).get()
+        with futures.ThreadPoolExecutor() as pool:
+            thisresult = await get_event_loop().run_in_executor(pool, adaface.verify_face, image, config.SIMILARITY_THRESHOLD)
         if thisresult is None:
             return {"result": "False", "error": "No similar face found"}
         elif thisresult is not None and thisresult[0] is not None:
@@ -100,7 +97,7 @@ async def _add_face(file: UploadFile = File()):
         content = await file.read()
         image = Image.open(io.BytesIO(content))
         vector = adaface.ada_face_feature.byte_get_represent(image)
-        adaface.face_database.addFace(file.filename, vector.detach().numpy()[0])
+        adaface.face_database.addFace(file.filename, vector.detach().numpy())
         logger.info("add face success")
         return {"result": "True"}
     except Exception as err:

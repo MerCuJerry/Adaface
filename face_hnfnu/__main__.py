@@ -38,11 +38,11 @@ async def start_server():
 if __name__ == "__main__":
     try:
         adaface.startup_event()
-        procpool.startup_event()
+        #procpool.startup_event()
         asyncio.run(start_server())
     except KeyboardInterrupt:
         pass
     finally:
         logger.info("Server Shutdown")
-        procpool.shutdown_event()
+        #procpool.shutdown_event()
         adaface.shutdown_event()
